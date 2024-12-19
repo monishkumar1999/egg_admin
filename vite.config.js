@@ -6,9 +6,9 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "http://localhost:7000", // Backend server
+        target: "https://egg-backendcode.onrender.com", // Updated backend server URL
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ""), // Remove `/api` prefix
+        rewrite: (path) => path.replace(/^\/api/, ""), // Removes the /api prefix
       },
     },
   },
