@@ -14,8 +14,9 @@ const SideMenu = () => {
   const [Menus, setmenu] = useState([]);
   const menuRef = useRef(null);
   const [pagereload, setPageLoad] = useState(true);
-  const [addMainMenu, setMainMenu] = useState(true);
-
+  const [addMainMenu, setMainMenu] = useState(false);
+  const [isEditClicked, setIsEditClicked] = useState(false);
+  const [inputValue, setInputValue] = useState(null);
   const calluseEffect = () => {
     useEffect(() => {
       const fetchData = async () => {
@@ -30,30 +31,64 @@ const SideMenu = () => {
       fetchData();
     }, [pagereload]); // Empty array ensures this runs only once, on component mount
   };
+  calluseEffect();
 
   const toggleSubmenu = (index) => {
     setsubmenuOpen((prevState) => ({
       [index]: !prevState[index],
     }));
   };
-  calluseEffect();
+
+  const editClicked = (index, oldvalue) => {
+    setInputValue(oldvalue);
+    setIsEditClicked((preState) => ({
+      [index]: !preState[index],
+    }));
+  };
+
+  const cancleEdit = () => {
+    setIsEditClicked(false);
+  };
+
+  const handleChange = (e) => {
+    setInputValue(e.target.value);
+  };
 
   const addMainMenuFun = async (e) => {
     e.preventDefault();
-    console.log()
-   
+    console.log();
+
     const menuName = menuRef.current.value;
     if (menuName.trim() === "") {
-      return; 
+      return;
     }
     await axios.post("/api/insertMainMenu", {
       title: menuName,
     });
 
-   setPageLoad(!pagereload)
-   menuRef.current.value=''
+    setPageLoad(!pagereload);
+    menuRef.current.value = "";
   };
 
+  const updateMainMenu = async (index, oldMainMenuName) => {
+    if (oldMainMenuName === inputValue || inputValue=='') {
+      alert("same cannot update");
+      return
+    }
+
+    const data = await axios.post("/api/update/MainMenu", {
+      mainMenuName: oldMainMenuName,
+      updateName: inputValue,
+    });
+
+    if (data.data.status) {
+      setIsEditClicked(true);
+      setPageLoad(!pagereload);
+    }
+    else{
+      alert(data.data)
+    }
+  };
   if (!Menus) {
     return <div>Error loading menu data</div>; // Display error state if menus is null
   }
@@ -77,7 +112,66 @@ const SideMenu = () => {
             return (
               <>
                 <li className="bg-transparent rounded relative hover:bg-slate-50 font-bold text-gray-500 h-11 pl-8 pt-2">
-                  {value.title}
+                  {isEditClicked[index] ? (
+                    <>
+                      <div className="flex">
+                        <input
+                          value={inputValue}
+                          type="text"
+                          onChange={handleChange}
+                        />
+                        <button
+                          className="bg-green-400 text-white font-bold shadow-lg rounded-lg p-1"
+                          onClick={() => {
+                            updateMainMenu(index, value.title);
+                          }}
+                        >
+                          Update
+                        </button>
+                        <button
+                          className="bg-red-400 text-white font-bold shadow-lg rounded-lg p-1"
+                          onClick={() => {
+                            cancleEdit();
+                          }}
+                        >
+                          Cancle
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <span>
+                        <span className="absolute right-20">
+                          <FaEdit
+                            className="cursor-pointer"
+                            onClick={() => {
+                              editClicked(index, value.title);
+                            }}
+                          />
+                        </span>
+                        <span className="absolute right-5">
+                          <MdDelete
+                            className="cursor-pointer"
+                            onClick={async () => {
+                              try {
+                                const { data } = await axios.post(
+                                  `api/delete/MainMenu`,
+                                  {
+                                    Title: value.title,
+                                  }
+                                );
+
+                                setPageLoad(!pagereload);
+                              } catch (error) {
+                                console.error("Error:", error); // Handle errors here
+                              }
+                            }}
+                          />
+                        </span>
+                      </span>
+                      {value.title}
+                    </>
+                  )}
 
                   {value.submenu && (
                     <HiArrowLongDown
@@ -87,29 +181,6 @@ const SideMenu = () => {
                       }}
                     />
                   )}
-                  <span className="absolute right-20">
-                    <FaEdit className="cursor-pointer" />
-                  </span>
-                  <span className="absolute right-5">
-                    <MdDelete
-                      className="cursor-pointer"
-                      onClick={async () => {
-                        try {
-                          const { data } = await axios.post(
-                            `api/delete/MainMenu`,
-                            {
-                              Title: value.title,
-                            }
-                          );
-
-                          setPageLoad(!pagereload)
-
-                        } catch (error) {
-                          console.error("Error:", error); // Handle errors here
-                        }
-                      }}
-                    />
-                  </span>
                 </li>
 
                 {value.submenu && submenuOpen[index] && (
@@ -147,7 +218,10 @@ const SideMenu = () => {
               >
                 Submit
               </button>
-              <button className="bg-red-500 rounded-md p-2 m-2 shadow-lg text-white font-bold hover:bg-red-600 transition-colors" type="reset">
+              <button
+                className="bg-red-500 rounded-md p-2 m-2 shadow-lg text-white font-bold hover:bg-red-600 transition-colors"
+                type="reset"
+              >
                 Reset
               </button>
             </div>
