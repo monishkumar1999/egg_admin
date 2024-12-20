@@ -17,6 +17,10 @@ const SideMenu = () => {
   const [addMainMenu, setMainMenu] = useState(false);
   const [isEditClicked, setIsEditClicked] = useState(false);
   const [inputValue, setInputValue] = useState(null);
+
+  const SubmenuDelete = (title, subtitle) => {
+    console.log(title, subtitle);
+  };
   const calluseEffect = () => {
     useEffect(() => {
       const fetchData = async () => {
@@ -71,9 +75,9 @@ const SideMenu = () => {
   };
 
   const updateMainMenu = async (index, oldMainMenuName) => {
-    if (oldMainMenuName === inputValue || inputValue=='') {
+    if (oldMainMenuName === inputValue || inputValue == "") {
       alert("same cannot update");
-      return
+      return;
     }
 
     const data = await axios.post("/api/update/MainMenu", {
@@ -84,9 +88,8 @@ const SideMenu = () => {
     if (data.data.status) {
       setIsEditClicked(true);
       setPageLoad(!pagereload);
-    }
-    else{
-      alert(data.data)
+    } else {
+      alert(data.data);
     }
   };
   if (!Menus) {
@@ -189,12 +192,40 @@ const SideMenu = () => {
                       return (
                         <li
                           key={index}
-                          className="cursor-pointer hover:bg-gray-100 pl-10 py-3 rounded-lg font-bold text-gray-500"
+                          className="cursor-pointer hover:bg-gray-100 pl-10 py-3 rounded-lg font-bold text-gray-500 relative"
                         >
                           {subMenus.title}
+
+                          <MdDelete
+                            className="absolute right-0 top-4"
+                            onClick={async () => {
+                              console.log(subMenus.title, value.title);
+
+                              const data = await axios.put(
+                                "apidelete/subMenu",
+                                {
+                                  title: value.title,
+                                  subMenu: subMenus.title,
+                                }
+                              );
+                              if (data) {
+                                setPageLoad(!pagereload);
+                              }
+                              else{
+                                alert(data)
+                              }
+                            }}
+                          />
                         </li>
                       );
                     })}
+
+                    <IoIosAddCircleOutline
+                      className="text-center ml-32 cursor-pointer"
+                      onClick={() => {
+                        SubmenuDelete();
+                      }}
+                    />
                   </ul>
                 )}
               </>
